@@ -14,12 +14,12 @@ var player;
 exports.init = function(_player, _logger, callback) {
     player = _player;
 
-    if (!player.app) {
+    if (!player.plugins['plugin-express']) {
         callback('module must be initialized after expressjs module!');
-    } else if (!player.plugins.socketio) {
+    } else if (!player.plugins['plugin-socketio']) {
         // weblistener client depends on socketio module
         callback('module must be initialized after socketio module!');
-    } else if (!player.plugins.rest) {
+    } else if (!player.plugins['plugin-rest']) {
         // weblistener client depends on rest module
         callback('module must be initialized after rest module!');
     } else {
