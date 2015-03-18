@@ -1,0 +1,23 @@
+{
+  "name": "nodeplayer-plugin-weblistener",
+  "version": "0.1.95",
+  "description": "web-based music listener plugin for nodeplayer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FruitieX/nodeplayer-plugin-weblistener.git"
+  },
+  "author": "FruitieX",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/FruitieX/nodeplayer-plugin-weblistener/issues"
+  },
+  "homepage": "https://github.com/FruitieX/nodeplayer-plugin-weblistener",
+  "dependencies": {
+    "express": "^4.12.3",
+    "nodeplayer-config": "*"
+  }
+}
