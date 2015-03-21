@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/FruitieX/nodeplayer-plugin-weblistener",
   "dependencies": {
+    "nodeplayer": "*",
     "express": "^4.12.3"
   }
 }
