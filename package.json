@@ -4,7 +4,7 @@
   "description": "web-based music listener plugin for nodeplayer",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/mocha/bin/mocha"
   },
   "repository": {
     "type": "git",
@@ -19,5 +19,14 @@
   "dependencies": {
     "nodeplayer": "*",
     "express": "^4.12.3"
+  },
+  "devDependencies": {
+    "chai": "^2.1.2",
+    "istanbul": "^0.3.8",
+    "jscs": "^1.11.3",
+    "mocha": "^2.2.1",
+    "mocha-jscs": "^1.0.2",
+    "mocha-jshint": "^1.0.0",
+    "underscore": "^1.8.2"
   }
 }

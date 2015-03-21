@@ -1,0 +1,5 @@
+cache
+coverage
+settings
+node_modules
+client/js
