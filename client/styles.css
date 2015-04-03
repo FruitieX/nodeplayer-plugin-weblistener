@@ -56,6 +56,9 @@
 #search-results-text {
     font-size: 30px;
 }
+#queue-text {
+    font-size: 30px;
+}
 .remove {
     float:right;
     margin-left:5px;
