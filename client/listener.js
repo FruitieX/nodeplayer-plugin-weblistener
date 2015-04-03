@@ -8,6 +8,15 @@ var currentSong = {};
 var currentProgress;
 var streaming = false;
 
+var verifySong = function(song) {
+    if (!song.albumArt) {
+        song.albumArt = {};
+    }
+    if (!song.albumArt.lq) {
+        song.albumArt.lq = 'media/NoAlbumArt.png';
+    }
+};
+
 var search = function() {
     var searchTerms = $('#search-terms').val();
     $('#search-button').prop('disabled', true);
@@ -38,6 +47,7 @@ var search = function() {
         });
         songs = _.sortBy(songs, 'score').reverse();
         _.each(songs, function(song) {
+            verifySong(song);
             $.tmpl('searchTemplate', {
                 title: song.title,
                 artist: song.artist,
@@ -91,12 +101,7 @@ var socket = io();
 socket.on('queue', function(data) {
     queue = data.items;
     _.each(queue, function(song) {
-        if (!song.albumArt) {
-            song.albumArt = {};
-        }
-        if (!song.albumArt.lq) {
-            song.albumArt.lq = 'media/NoAlbumArt.png';
-        }
+        verifySong(song);
     });
     queueTruncated = (data.length > data.items.length);
     updateQueue();
