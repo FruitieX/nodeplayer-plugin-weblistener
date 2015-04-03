@@ -389,24 +389,23 @@ $(document).ready(function() {
         socket.emit('shuffleQueue');
     });
     $('#stream').click(function(event) {
+        var streamingButton = $('#stream');
         if (streaming) {
             streaming = false;
             var audio = document.getElementById('audio');
 
-            var streamingButton = $('#stream');
             streamingButton.removeClass('btn-primary');
 
             audio.pause();
         } else {
             streaming = true;
 
-            var streamingButton = $('#stream');
             streamingButton.addClass('btn-primary');
 
             startPlayback();
         }
     });
     $(function () {
-      $('[data-toggle="tooltip"]').tooltip()
-    })
+      $('[data-toggle="tooltip"]').tooltip();
+    });
 });
