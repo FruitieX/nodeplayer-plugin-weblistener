@@ -88,7 +88,7 @@ socket.on('queue', function(data) {
     queue = data.items;
     _.each(queue, function(song) {
         if (!song.albumArt) {
-            song.albumArt = {}
+            song.albumArt = {};
         }
         if (!song.albumArt.lq) {
             song.albumArt.lq = 'media/NoAlbumArt.png';
