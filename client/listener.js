@@ -128,16 +128,16 @@ var startPlayback = function() {
         var pos = 0;
         if (currentSong.position) {
             pos = currentSong.position / 1000 + (new Date().getTime() - currentSong.playbackStart) / 1000;
+            audio.currentTime = pos;
         }
 
-        audio.currentTime = pos;
         audio.removeEventListener('loadedmetadata', setPos, false);
     };
     audio.addEventListener('loadedmetadata', setPos, false);
 };
 
 socket.on('playback', function(data) {
-    currentSong = data;
+    currentSong = data || {};
     if (!data || !data.playbackStart) {
         currentSong.playbackStart = new Date().getTime();
         $('#audio').trigger('pause');
