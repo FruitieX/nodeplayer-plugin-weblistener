@@ -4,6 +4,10 @@ var searchResults = {};
 var progress = {progress: 0, interval: null};
 var paused = true;
 
+var currentSong = {};
+var currentProgress;
+var streaming = false;
+
 var search = function() {
     var searchTerms = $('#search-terms').val();
     $('#search-button').prop('disabled', true);
@@ -110,11 +114,27 @@ var setVolume = _.throttle(function(volume) {
     });
 }, 100);
 
+var startPlayback = function() {
+    $('#audio').attr('src', '/song/' + currentSong.backendName +
+            '/' + currentSong.songID + '.' + currentSong.format);
+
+    var audio = document.getElementById('audio');
+    var setPos = function() {
+        var pos = 0;
+        if (currentSong.position) {
+            pos = currentSong.position / 1000 + (new Date().getTime() - currentSong.playbackStart) / 1000;
+        }
+
+        audio.currentTime = pos;
+        audio.removeEventListener('loadedmetadata', setPos, false);
+    };
+    audio.addEventListener('loadedmetadata', setPos, false);
+};
+
 socket.on('playback', function(data) {
-    console.log(data);
-    var currentProgress;
-    var msgTime = new Date().getTime();
+    currentSong = data;
     if (!data || !data.playbackStart) {
+        currentSong.playbackStart = new Date().getTime();
         $('#audio').trigger('pause');
         paused = true;
         $('#playpauseicon').removeClass('glyphicon-pause glyphicon-play');
@@ -127,10 +147,7 @@ socket.on('playback', function(data) {
             progress.duration = data.duration;
         }
     } else {
-        $('#audio').attr('src', '/song/' + data.backendName +
-                '/' + data.songID + '.' + data.format);
-
-        var audio = document.getElementById('audio');
+        currentSong.playbackStart = new Date().getTime();
         paused = false;
         $('#playpauseicon').removeClass('glyphicon-pause glyphicon-play');
         $('#playpauseicon').addClass('glyphicon-pause');
@@ -138,19 +155,6 @@ socket.on('playback', function(data) {
         // volume update
         $('#volume').val(data.volume);
         $('#audio')[0].volume = data.volume;
-
-        // TODO: even better sync using NTP
-        var setPos = function() {
-            var pos = 0;
-            if (data.position) {
-                pos = data.position / 1000 + (new Date().getTime() - msgTime) / 1000;
-            }
-
-            console.log('loadedmetadata, starting playback from ' + pos);
-            audio.currentTime = pos;
-            audio.removeEventListener('loadedmetadata', setPos, false);
-        };
-        audio.addEventListener('loadedmetadata', setPos, false);
 
         currentProgress = (data.position || 0);
         progress.started = new Date() - currentProgress;
@@ -161,6 +165,10 @@ socket.on('playback', function(data) {
             progress.interval = setInterval(function() {
                 updateProgress(100);
             }, 100);
+        }
+
+        if (streaming) {
+            startPlayback();
         }
     }
 });
@@ -380,4 +388,25 @@ $(document).ready(function() {
     $('#shuffle').click(function(event) {
         socket.emit('shuffleQueue');
     });
+    $('#stream').click(function(event) {
+        if (streaming) {
+            streaming = false;
+            var audio = document.getElementById('audio');
+
+            var streamingButton = $('#stream');
+            streamingButton.removeClass('btn-primary');
+
+            audio.pause();
+        } else {
+            streaming = true;
+
+            var streamingButton = $('#stream');
+            streamingButton.addClass('btn-primary');
+
+            startPlayback();
+        }
+    });
+    $(function () {
+      $('[data-toggle="tooltip"]').tooltip()
+    })
 });

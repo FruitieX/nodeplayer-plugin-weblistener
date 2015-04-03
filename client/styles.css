@@ -145,6 +145,10 @@
 #controls {
     float: left;
 }
+#stream {
+    margin-left: 10px;
+    float: left;
+}
 #mute {
     margin-left: 10px;
     float: left;
