@@ -159,15 +159,6 @@
     padding-top:10px;
     clear: both;
 }
-#windowdisclaimer {
-    clear: both;
-    margin-top:50px;
-    text-overflow:ellipsis;
-    color: #666;
-    height:20px;
-    font-size: 15px;
-    text-align:center;
-}
 .queue-item {
     padding: 5px;
 }
