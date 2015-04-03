@@ -1,20 +1,41 @@
+.thumbnail {
+    position: relative;
+    height: 60px;
+    width: 60px;
+    overflow: hidden;
+    float: left;
+    padding: 0px;
+    margin: 0px;
+    margin-right: 5px;
+}
+.thumbnail img {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    height: 100%;
+    width: auto;
+        -webkit-transform: translate(-50%,-50%);
+        -ms-transform: translate(-50%,-50%);
+        transform: translate(-50%,-50%);
+}
 .big {
     white-space:nowrap;
     text-overflow:ellipsis;
     overflow:hidden;
     color: #444;
-    height:20px;
+    height:30px;
     font-size: 16px;
-    text-align:center;
+    text-align: left;
+    padding-top: 10px;
 }
 .small {
     white-space:nowrap;
     text-overflow:ellipsis;
     overflow:hidden;
     color: #666;
-    height:20px;
+    height:30px;
     font-size: 15px;
-    text-align:center;
+    text-align: left;
 }
 #search-remove {
     float:right;
@@ -69,6 +90,7 @@
 
 .searchResult {
     background: #fff;
+    padding: 5px;
 }
 
 .searchResult:hover {
@@ -84,6 +106,7 @@
 
 .now-playing {
     background: none;
+    padding: 5px;
 }
 
 .listener-link {
@@ -93,7 +116,7 @@
 
 #progress {
     position: absolute;
-    margin: -10px -10px -10px -15px;
+    margin: -5px -5px -5px -5px;
     height: 100%;
     background-color:#eee;
     z-index: -2;
@@ -101,7 +124,7 @@
 
 #progressmouseover {
     position: absolute;
-    margin: -10px -10px -10px -15px;
+    margin: -5px -5px -5px -5px;
     height: 100%;
     background-color:#bbb;
     background-blend-mode: darken;
@@ -141,6 +164,9 @@
     height:20px;
     font-size: 15px;
     text-align:center;
+}
+.queue-item {
+    padding: 5px;
 }
 .queue-item:hover {
     background-color: #eee;

@@ -263,11 +263,12 @@ $(document).ready(function() {
 
     var nowPlayingMarkup =
         '<li class="list-group-item now-playing" id="nowplaying">' +
+        '<div class="thumbnail"><img src=${albumArt.lq} /></div>' +
         '<div id="progressmouseover"></div>' +
         '<div id="progress"></div>' +
         '<div class="np-songinfo">' +
-        '<div class="big"><b>${title}</b> - ${durationString}</div>' +
-        '<div class="small"><b>${artist}</b> (${album})</div>' +
+        '<div class="big"><b>${title}</b></div>' +
+        '<div class="small"><b>${artist}</b> (${album}) - <b>${durationString}</b></div>' +
         '</div>' +
         '</li>';
 
@@ -276,9 +277,10 @@ $(document).ready(function() {
     var searchResultMarkup =
         '<li class="list-group-item searchResult" id="${backendName}${songID}"' +
             'onclick="appendQueue(\'${backendName}\', \'${songID}\')">' +
-
-        '<div class="big"><b>${title}</b> - ${duration}</div>' +
-        '<div class="small"><b>${artist}</b> (${album})</div>' +
+        
+        '<div class="thumbnail"><img src=${albumArt.lq} /></div>' +
+        '<div class="big"><b>${title}</b></div>' +
+        '<div class="small"><b>${artist}</b> (${album}) - <b>${duration}</b></div>' +
         '</li>';
 
     $.template('searchTemplate', searchResultMarkup);
@@ -300,13 +302,14 @@ $(document).ready(function() {
         '<li class="list-group-item queue-item" id="${backendName}${songID}"' +
             'onclick="skipSongs(\'${pos}\');">' +
 
+        '<div class="thumbnail"><img src=${albumArt.lq} /></div>' +
         '<div class="remove glyphicon glyphicon-remove" id="remove${pos}"' +
             'onclick="removeFromQueue(\'${pos}\', \'${backendName}${songID}\'); ' +
             'return false;"></div>' +
 
         '<div class="songinfo">' +
-        '<div class="big"><b>${title}</b> - ${durationString}</div>' +
-        '<div class="small"><b>${artist}</b> (${album})</div>' +
+        '<div class="big"><b>${title}</b></div>' +
+        '<div class="small"><b>${artist}</b> (${album}) - <b>${durationString}</b></div>' +
         '</div>' +
         '</li>';
 
