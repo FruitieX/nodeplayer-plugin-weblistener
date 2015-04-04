@@ -71,6 +71,15 @@
 .remove:hover {
     color: #c77;
 }
+.duration {
+    float: right;
+    height: 40px;
+}
+.duration b {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
 .downarrow {
     float:left;
     margin-right:5px;
