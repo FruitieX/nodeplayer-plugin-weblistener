@@ -282,6 +282,10 @@ var updateQueue = function() {
                 // TODO: this is a bit stupid?
                 $('#progressmouseover').css('visibility', 'visible');
             });
+            $('#remove0').click(function(e) {
+                removeFromQueue(0);
+                e.stopPropagation();
+            });
         }
 
         var onRemoveClick = function(e) {
@@ -294,7 +298,12 @@ var updateQueue = function() {
             queue[i].durationString = durationToString(queue[i].duration / 1000);
             queue[i].pos = i;
             $.tmpl('queueTemplate', queue[i]).appendTo('#queue');
-            $('#remove' + i).click(onRemoveClick);
+            (function(i) {
+                $('#remove' + i).click(function(e) {
+                    removeFromQueue(i);
+                    e.stopPropagation();
+                });
+            }(i));
         }
         if (queueTruncated) {
             $.tmpl('queueTruncated').appendTo('#queue');
@@ -343,7 +352,10 @@ $(document).ready(function() {
     var nowPlayingMarkup =
         '<li class="list-group-item now-playing" id="nowplaying">' +
 
-        '<div class="duration"><b>${durationString}</b></div>' +
+        '<div class="right fullHeight">' +
+        '<div class="remove glyphicon glyphicon-remove" id="remove0"></div>' +
+        '<div class="duration-container"><div class="duration">${durationString}</div></div>' +
+        '</div>' +
 
         '<div class="thumbnail"><img src=${albumArt.lq} /></div>' +
         '<div id="progressmouseover"></div>' +
@@ -360,7 +372,7 @@ $(document).ready(function() {
         '<li class="list-group-item searchResult" id="${backendName}${songID}"' +
             'onclick="appendQueue(\'${backendName}\', \'${songID}\')">' +
 
-        '<div class="duration"><b>${duration}</b></div>' +
+        '<div class="duration-container"><div class="duration">${duration}</div></div>' +
 
         '<div class="thumbnail"><img src=${albumArt.lq} /></div>' +
         '<div class="big"><b>${title}</b></div>' +
@@ -386,12 +398,12 @@ $(document).ready(function() {
         '<li class="list-group-item queue-item" id="${backendName}${songID}"' +
             'onclick="skipSongs(\'${pos}\');">' +
 
-        '<div class="duration"><b>${durationString}</b></div>' +
+        '<div class="right fullHeight">' +
+        '<div class="remove glyphicon glyphicon-remove" id="remove${pos}"></div>' +
+        '<div class="duration-container"><div class="duration">${durationString}</div></div>' +
+        '</div>' +
 
         '<div class="thumbnail"><img src=${albumArt.lq} /></div>' +
-        '<div class="remove glyphicon glyphicon-remove" id="remove${pos}"' +
-            'onclick="removeFromQueue(\'${pos}\', \'${backendName}${songID}\'); ' +
-            'return false;"></div>' +
 
         '<div class="songinfo">' +
         '<div class="big"><b>${title}</b></div>' +
