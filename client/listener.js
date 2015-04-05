@@ -124,16 +124,31 @@ socket.on('volume', function(data) {
     $('#audio')[0].volume = data.volume;
 });
 var setVolume = _.throttle(function(volume) {
-    socket.emit('setVolume', {
+    saveEmit('setVolume', {
         userID: $.cookie('userID'),
         volume: volume
     });
 }, 100);
 
 socket.on('invalidCredentials', function() {
+    retryAfterLogin = function() {
+        if (savedEmit.event) {
+            saveEmit(savedEmit.event, savedEmit.data);
+        }
+        savedEmit = {};
+    };
+
+    console.log('invalid passport.socketio credentials!');
     $('#loginError').empty();
     $('#loginModal').modal();
 });
+
+var savedEmit = {};
+var saveEmit = function(event, data) {
+    savedEmit.event = event;
+    savedEmit.data = data;
+    socket.emit(event, data);
+};
 
 var startPlayback = function() {
     if (!currentSong.backendName ||
@@ -263,7 +278,7 @@ var updateQueue = function() {
             updateProgress(0);
             $('#nowplaying').click(function(e) {
                 var posX = e.pageX - $(this).offset().left;
-                socket.emit('startPlayback', (posX / $(this).outerWidth()) * queue[0].duration);
+                saveEmit('startPlayback', (posX / $(this).outerWidth()) * queue[0].duration);
             });
             $('#nowplaying').mousemove(function(e) {
                 var posX = e.pageX - $(this).offset().left;
@@ -318,21 +333,30 @@ var durationToString = function(seconds) {
 };
 
 var removeFromQueue = function(pos, id) {
-    socket.emit('removeFromQueue', {
+    saveEmit('removeFromQueue', {
         pos: pos
     });
     $(document.getElementById(id)).css('background-color', '#fee');
 };
 
 var skipSongs = function(cnt) {
-    socket.emit('skipSongs', cnt);
+    saveEmit('skipSongs', cnt);
 };
 
-var updateLogin = function() {
+var updateLogin = function(callback, reconnectIO) {
     if ($.cookie('username')) {
         $('#auth-text').html('Logged in as: <b id="username"></b> ' +
             '(<a href="/logout">Log out</a>)');
         $('#username').text($.cookie('username'));
+    }
+    if (reconnectIO) {
+        socket.disconnect();
+        socket.connect();
+        socket.once('connect', function() {
+            callback();
+        });
+    } else if (callback) {
+        callback();
     }
 };
 
@@ -455,20 +479,20 @@ $(document).ready(function() {
         setVolumeIcon();
     });
     $('#previous').click(function(event) {
-        socket.emit('skipSongs', -1);
+        saveEmit('skipSongs', -1);
     });
     $('#next').click(function(event) {
-        socket.emit('skipSongs', 1);
+        saveEmit('skipSongs', 1);
     });
     $('#playpause').click(function(event) {
         if (paused) {
-            socket.emit('startPlayback');
+            saveEmit('startPlayback');
         } else {
-            socket.emit('pausePlayback');
+            saveEmit('pausePlayback');
         }
     });
     $('#shuffle').click(function(event) {
-        socket.emit('shuffleQueue');
+        saveEmit('shuffleQueue');
     });
     $('#stream').click(function(event) {
         var streamingButton = $('#stream');
@@ -493,6 +517,9 @@ $(document).ready(function() {
     $('#loginModal').on('shown.bs.modal', function () {
         $('#inputUsername').focus();
     });
+    $('#loginModal').on('hidden.bs.modal', function () {
+        retryAfterLogin = _.noop;
+    });
     $('#loginForm').submit(function(event) {
         event.preventDefault();
 
@@ -507,12 +534,12 @@ $(document).ready(function() {
         })
         .done(function(data) {
             console.log(data);
-            updateLogin();
+            updateLogin(function() {
+                $('#loginModal').modal('hide');
 
-            $('#loginModal').modal('hide');
-
-            retryAfterLogin();
-            retryAfterLogin = _.noop;
+                retryAfterLogin();
+                retryAfterLogin = _.noop;
+            }, true);
         })
         .error(function(res) {
             $('#loginError').text(res.responseText);
