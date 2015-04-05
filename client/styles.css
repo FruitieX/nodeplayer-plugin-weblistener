@@ -190,3 +190,7 @@
     height: 50px;
     width: auto;
 }
+#auth-text {
+    position: relative;
+    text-align: center;
+}

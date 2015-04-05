@@ -8,6 +8,8 @@ var currentSong = {};
 var currentProgress;
 var streaming = false;
 
+var retryAfterLogin = _.noop;
+
 var verifySong = function(song) {
     if (!song.albumArt) {
         song.albumArt = {};
@@ -29,6 +31,15 @@ var search = function() {
             //pageToken: 0 // don't use unless you really want a specific page
         }),
         contentType: 'application/json'
+    })
+    .error(function(res) {
+        if (res.status === 403) {
+            retryAfterLogin = search;
+            $('#loginError').empty();
+            $('#loginModal').modal();
+        } else {
+            console.error(res);
+        }
     })
     .done(function(data) {
         searchResults = JSON.parse(data);
@@ -119,21 +130,56 @@ var setVolume = _.throttle(function(volume) {
     });
 }, 100);
 
-var startPlayback = function() {
-    $('#audio').attr('src', '/song/' + currentSong.backendName +
-            '/' + currentSong.songID + '.' + currentSong.format);
+socket.on('invalidCredentials', function() {
+    $('#loginError').empty();
+    $('#loginModal').modal();
+});
 
-    var audio = document.getElementById('audio');
-    var setPos = function() {
+var startPlayback = function() {
+    var audio = $('#audio');
+    var url = '/song/' + currentSong.backendName + '/' +
+        currentSong.songID + '.' + currentSong.format;
+
+    audio.attr('src', url);
+
+    /*
+    audio.on('loadedmetadata', function() {
+        console.log('loadedmetadata');
         var pos = 0;
         if (currentSong.position) {
-            pos = currentSong.position / 1000 + (new Date().getTime() - currentSong.playbackStart) / 1000;
-            audio.currentTime = pos;
+            pos = currentSong.position / 1000 +
+                (new Date().getTime() - currentSong.playbackStart) / 1000;
+            this.currentTime = pos;
         }
-
-        audio.removeEventListener('loadedmetadata', setPos, false);
-    };
-    audio.addEventListener('loadedmetadata', setPos, false);
+    });
+    */
+    audio.on('error', function(e) {
+        if (e.target.error.code === e.target.error.MEDIA_ERR_NETWORK) {
+            // FIXME: stupid way of figuring out if the error was a 403,
+            // but is there even a better way?
+            $.ajax({
+                url: url,
+                headers: {Range: "bytes=0-1"},
+                success: function( data ) {
+                    $('#results').html( data );
+                }
+            })
+            .done(function(data) {
+                console.warn('wtf... AJAX request worked but player did not');
+            })
+            .error(function(res) {
+                if (res.status === 403) {
+                    retryAfterLogin = startPlayback;
+                    $('#loginError').text(res.responseText);
+                    $('#loginModal').modal();
+                } else {
+                    console.error('status was 403, unknown error while streaming', e);
+                }
+            });
+        } else {
+            console.error('unknown error while streaming', e);
+        }
+    });
 };
 
 socket.on('playback', function(data) {
@@ -267,6 +313,14 @@ var removeFromQueue = function(pos, id) {
 
 var skipSongs = function(cnt) {
     socket.emit('skipSongs', cnt);
+};
+
+var updateLogin = function() {
+    if ($.cookie('username')) {
+        $('#auth-text').html('Logged in as: <b id="username"></b> ' +
+            '(<a href="/logout">Log out</a>)');
+        $('#username').text($.cookie('username'));
+    }
 };
 
 $(document).ready(function() {
@@ -420,4 +474,33 @@ $(document).ready(function() {
     $(function () {
       $('[data-toggle="tooltip"]').tooltip();
     });
+    $('#loginModal').on('shown.bs.modal', function () {
+        $('#inputUsername').focus()
+    })
+    $('#loginForm').submit(function(event) {
+        event.preventDefault();
+
+        $.ajax({
+            type: 'POST',
+            url: '/login',
+            data: JSON.stringify({
+                username: $('#inputUsername').val(),
+                password: $('#inputPassword').val()
+            }),
+            contentType: 'application/json'
+        })
+        .done(function(data) {
+            console.log(data);
+            updateLogin();
+
+            $('#loginModal').modal('hide');
+
+            retryAfterLogin();
+            retryAfterLogin = _.noop;
+        })
+        .error(function(res) {
+            $('#loginError').text(res.responseText);
+        });
+    });
+    updateLogin();
 });
