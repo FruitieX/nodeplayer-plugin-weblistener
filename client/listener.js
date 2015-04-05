@@ -309,16 +309,17 @@ var updateQueue = function() {
         };
 
         // rest of queue
+        var removeOnClick = function(index) {
+            $('#remove' + index).click(function(e) {
+                removeFromQueue(index);
+                e.stopPropagation();
+            });
+        };
         for (var i = 1; i < queue.length; i++) {
             queue[i].durationString = durationToString(queue[i].duration / 1000);
             queue[i].pos = i;
             $.tmpl('queueTemplate', queue[i]).appendTo('#queue');
-            (function(i) {
-                $('#remove' + i).click(function(e) {
-                    removeFromQueue(i);
-                    e.stopPropagation();
-                });
-            }(i));
+            removeOnClick(i);
         }
         if (queueTruncated) {
             $.tmpl('queueTruncated').appendTo('#queue');
