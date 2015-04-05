@@ -142,7 +142,7 @@ var startPlayback = function() {
 
     audio.attr('src', url);
 
-    /*
+    audio.off('loadedmetadata');
     audio.on('loadedmetadata', function() {
         console.log('loadedmetadata');
         var pos = 0;
@@ -152,7 +152,7 @@ var startPlayback = function() {
             this.currentTime = pos;
         }
     });
-    */
+    audio.off('error');
     audio.on('error', function(e) {
         if (e.target.error.code === e.target.error.MEDIA_ERR_NETWORK) {
             // FIXME: stupid way of figuring out if the error was a 403,
@@ -475,8 +475,8 @@ $(document).ready(function() {
       $('[data-toggle="tooltip"]').tooltip();
     });
     $('#loginModal').on('shown.bs.modal', function () {
-        $('#inputUsername').focus()
-    })
+        $('#inputUsername').focus();
+    });
     $('#loginForm').submit(function(event) {
         event.preventDefault();
 
