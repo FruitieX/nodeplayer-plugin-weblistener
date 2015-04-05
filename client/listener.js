@@ -90,7 +90,7 @@ var appendQueue = function(backendName, songID) {
     searchResults[backendName].songs[songID].userID = $.cookie('userID');
     $.ajax({
         type: 'POST',
-        url: '/queue',
+        url: '/queue/modify',
         data: JSON.stringify({
             songs: [searchResults[backendName].songs[songID]]
         }),
