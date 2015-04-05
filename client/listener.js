@@ -136,6 +136,13 @@ socket.on('invalidCredentials', function() {
 });
 
 var startPlayback = function() {
+    if (!currentSong.backendName ||
+        !currentSong.songID ||
+        !currentSong.format) {
+        console.error('currentSong is lacking required properties:', currentSong);
+        return;
+    }
+
     var audio = $('#audio');
     var url = '/song/' + currentSong.backendName + '/' +
         currentSong.songID + '.' + currentSong.format;
@@ -144,41 +151,38 @@ var startPlayback = function() {
 
     audio.off('loadedmetadata');
     audio.on('loadedmetadata', function() {
-        console.log('loadedmetadata');
-        var pos = 0;
         if (currentSong.position) {
-            pos = currentSong.position / 1000 +
+            var pos = currentSong.position / 1000 +
                 (new Date().getTime() - currentSong.playbackStart) / 1000;
+            console.info('seeking to ' + pos);
             this.currentTime = pos;
         }
     });
     audio.off('error');
     audio.on('error', function(e) {
-        if (e.target.error.code === e.target.error.MEDIA_ERR_NETWORK) {
-            // FIXME: stupid way of figuring out if the error was a 403,
-            // but is there even a better way?
-            $.ajax({
-                url: url,
-                headers: {Range: "bytes=0-1"},
-                success: function( data ) {
-                    $('#results').html( data );
-                }
-            })
-            .done(function(data) {
-                console.warn('wtf... AJAX request worked but player did not');
-            })
-            .error(function(res) {
-                if (res.status === 403) {
-                    retryAfterLogin = startPlayback;
-                    $('#loginError').text(res.responseText);
-                    $('#loginModal').modal();
-                } else {
-                    console.error('status was 403, unknown error while streaming', e);
-                }
-            });
-        } else {
-            console.error('unknown error while streaming', e);
-        }
+        // FIXME: stupid way of figuring out if the error was a 403,
+        // but is there even a better way?
+        $.ajax({
+            url: url,
+            headers: {Range: "bytes=0-1"},
+            success: function( data ) {
+                $('#results').html( data );
+            }
+        })
+        .done(function(data) {
+            console.error('AJAX request worked, player request did not, retrying...', e);
+            setTimeout(function() {startPlayback();}, 1000);
+        })
+        .error(function(res) {
+            if (res.status === 403) {
+                retryAfterLogin = startPlayback;
+                $('#loginError').text(res.responseText);
+                $('#loginModal').modal();
+            } else {
+                console.error('Unknown error while streaming, retrying...', e);
+                setTimeout(function() {startPlayback();}, 1000);
+            }
+        });
     });
 };
 
