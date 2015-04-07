@@ -63,22 +63,20 @@
     float:right;
     margin-left:5px;
     color: #aaa;
-    font-size:30px;
-    width:30px;
+    font-size:20px;
     height:100%;
     cursor:pointer;
 }
 .remove:hover {
     color: #c77;
 }
-.duration {
+.duration-container {
+    clear: both;
     float: right;
-    height: 40px;
+    font-size: 16px;
 }
-.duration b {
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%);
+.duration {
+    right: 5px;
 }
 .downarrow {
     float:left;
@@ -189,4 +187,14 @@
 .logo img {
     height: 50px;
     width: auto;
+}
+#auth-text {
+    position: relative;
+    text-align: center;
+}
+.right {
+    float: right;
+}
+.fullHeight {
+    height: 100%;
 }

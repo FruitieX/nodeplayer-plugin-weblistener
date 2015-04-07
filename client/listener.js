@@ -8,6 +8,8 @@ var currentSong = {};
 var currentProgress;
 var streaming = false;
 
+var retryAfterLogin = _.noop;
+
 var verifySong = function(song) {
     if (!song.albumArt) {
         song.albumArt = {};
@@ -29,6 +31,15 @@ var search = function() {
             //pageToken: 0 // don't use unless you really want a specific page
         }),
         contentType: 'application/json'
+    })
+    .error(function(res) {
+        if (res.status === 403) {
+            retryAfterLogin = search;
+            $('#loginError').empty();
+            $('#loginModal').modal();
+        } else {
+            console.error(res);
+        }
     })
     .done(function(data) {
         searchResults = JSON.parse(data);
@@ -79,7 +90,7 @@ var appendQueue = function(backendName, songID) {
     searchResults[backendName].songs[songID].userID = $.cookie('userID');
     $.ajax({
         type: 'POST',
-        url: '/queue',
+        url: '/queue/add',
         data: JSON.stringify({
             songs: [searchResults[backendName].songs[songID]]
         }),
@@ -113,27 +124,81 @@ socket.on('volume', function(data) {
     $('#audio')[0].volume = data.volume;
 });
 var setVolume = _.throttle(function(volume) {
-    socket.emit('setVolume', {
+    saveEmit('setVolume', {
         userID: $.cookie('userID'),
         volume: volume
     });
 }, 100);
 
-var startPlayback = function() {
-    $('#audio').attr('src', '/song/' + currentSong.backendName +
-            '/' + currentSong.songID + '.' + currentSong.format);
-
-    var audio = document.getElementById('audio');
-    var setPos = function() {
-        var pos = 0;
-        if (currentSong.position) {
-            pos = currentSong.position / 1000 + (new Date().getTime() - currentSong.playbackStart) / 1000;
-            audio.currentTime = pos;
+socket.on('invalidCredentials', function() {
+    retryAfterLogin = function() {
+        if (savedEmit.event) {
+            saveEmit(savedEmit.event, savedEmit.data);
         }
-
-        audio.removeEventListener('loadedmetadata', setPos, false);
+        savedEmit = {};
     };
-    audio.addEventListener('loadedmetadata', setPos, false);
+
+    console.log('invalid passport.socketio credentials!');
+    $('#loginError').empty();
+    $('#loginModal').modal();
+});
+
+var savedEmit = {};
+var saveEmit = function(event, data) {
+    savedEmit.event = event;
+    savedEmit.data = data;
+    socket.emit(event, data);
+};
+
+var startPlayback = function() {
+    if (!currentSong.backendName ||
+        !currentSong.songID ||
+        !currentSong.format) {
+        console.error('currentSong is lacking required properties:', currentSong);
+        return;
+    }
+
+    var audio = $('#audio');
+    var url = '/song/' + currentSong.backendName + '/' +
+        currentSong.songID + '.' + currentSong.format;
+
+    audio.attr('src', url);
+
+    audio.off('loadedmetadata');
+    audio.on('loadedmetadata', function() {
+        if (currentSong.position) {
+            var pos = currentSong.position / 1000 +
+                (new Date().getTime() - currentSong.playbackStart) / 1000;
+            console.info('seeking to ' + pos);
+            this.currentTime = pos;
+        }
+    });
+    audio.off('error');
+    audio.on('error', function(e) {
+        // FIXME: stupid way of figuring out if the error was a 403,
+        // but is there even a better way?
+        $.ajax({
+            url: url,
+            headers: {Range: "bytes=0-1"},
+            success: function( data ) {
+                $('#results').html( data );
+            }
+        })
+        .done(function(data) {
+            console.error('AJAX request worked, player request did not, retrying...', e);
+            setTimeout(function() {startPlayback();}, 1000);
+        })
+        .error(function(res) {
+            if (res.status === 403) {
+                retryAfterLogin = startPlayback;
+                $('#loginError').text(res.responseText);
+                $('#loginModal').modal();
+            } else {
+                console.error('Unknown error while streaming, retrying...', e);
+                setTimeout(function() {startPlayback();}, 1000);
+            }
+        });
+    });
 };
 
 socket.on('playback', function(data) {
@@ -213,7 +278,7 @@ var updateQueue = function() {
             updateProgress(0);
             $('#nowplaying').click(function(e) {
                 var posX = e.pageX - $(this).offset().left;
-                socket.emit('startPlayback', (posX / $(this).outerWidth()) * queue[0].duration);
+                saveEmit('startPlayback', (posX / $(this).outerWidth()) * queue[0].duration);
             });
             $('#nowplaying').mousemove(function(e) {
                 var posX = e.pageX - $(this).offset().left;
@@ -232,6 +297,10 @@ var updateQueue = function() {
                 // TODO: this is a bit stupid?
                 $('#progressmouseover').css('visibility', 'visible');
             });
+            $('#remove0').click(function(e) {
+                removeFromQueue(0);
+                e.stopPropagation();
+            });
         }
 
         var onRemoveClick = function(e) {
@@ -240,11 +309,17 @@ var updateQueue = function() {
         };
 
         // rest of queue
+        var removeOnClick = function(index) {
+            $('#remove' + index).click(function(e) {
+                removeFromQueue(index);
+                e.stopPropagation();
+            });
+        };
         for (var i = 1; i < queue.length; i++) {
             queue[i].durationString = durationToString(queue[i].duration / 1000);
             queue[i].pos = i;
             $.tmpl('queueTemplate', queue[i]).appendTo('#queue');
-            $('#remove' + i).click(onRemoveClick);
+            removeOnClick(i);
         }
         if (queueTruncated) {
             $.tmpl('queueTruncated').appendTo('#queue');
@@ -259,14 +334,31 @@ var durationToString = function(seconds) {
 };
 
 var removeFromQueue = function(pos, id) {
-    socket.emit('removeFromQueue', {
+    saveEmit('removeFromQueue', {
         pos: pos
     });
     $(document.getElementById(id)).css('background-color', '#fee');
 };
 
 var skipSongs = function(cnt) {
-    socket.emit('skipSongs', cnt);
+    saveEmit('skipSongs', cnt);
+};
+
+var updateLogin = function(callback, reconnectIO) {
+    if ($.cookie('username')) {
+        $('#auth-text').html('Logged in as: <b id="username"></b> ' +
+            '(<a href="/logout">Log out</a>)');
+        $('#username').text($.cookie('username'));
+    }
+    if (reconnectIO) {
+        socket.disconnect();
+        socket.connect();
+        socket.once('connect', function() {
+            callback();
+        });
+    } else if (callback) {
+        callback();
+    }
 };
 
 $(document).ready(function() {
@@ -285,7 +377,10 @@ $(document).ready(function() {
     var nowPlayingMarkup =
         '<li class="list-group-item now-playing" id="nowplaying">' +
 
-        '<div class="duration"><b>${durationString}</b></div>' +
+        '<div class="right fullHeight">' +
+        '<div class="remove glyphicon glyphicon-remove" id="remove0"></div>' +
+        '<div class="duration-container"><div class="duration">${durationString}</div></div>' +
+        '</div>' +
 
         '<div class="thumbnail"><img src=${albumArt.lq} /></div>' +
         '<div id="progressmouseover"></div>' +
@@ -302,7 +397,7 @@ $(document).ready(function() {
         '<li class="list-group-item searchResult" id="${backendName}${songID}"' +
             'onclick="appendQueue(\'${backendName}\', \'${songID}\')">' +
 
-        '<div class="duration"><b>${duration}</b></div>' +
+        '<div class="duration-container"><div class="duration">${duration}</div></div>' +
 
         '<div class="thumbnail"><img src=${albumArt.lq} /></div>' +
         '<div class="big"><b>${title}</b></div>' +
@@ -328,12 +423,12 @@ $(document).ready(function() {
         '<li class="list-group-item queue-item" id="${backendName}${songID}"' +
             'onclick="skipSongs(\'${pos}\');">' +
 
-        '<div class="duration"><b>${durationString}</b></div>' +
+        '<div class="right fullHeight">' +
+        '<div class="remove glyphicon glyphicon-remove" id="remove${pos}"></div>' +
+        '<div class="duration-container"><div class="duration">${durationString}</div></div>' +
+        '</div>' +
 
         '<div class="thumbnail"><img src=${albumArt.lq} /></div>' +
-        '<div class="remove glyphicon glyphicon-remove" id="remove${pos}"' +
-            'onclick="removeFromQueue(\'${pos}\', \'${backendName}${songID}\'); ' +
-            'return false;"></div>' +
 
         '<div class="songinfo">' +
         '<div class="big"><b>${title}</b></div>' +
@@ -385,20 +480,20 @@ $(document).ready(function() {
         setVolumeIcon();
     });
     $('#previous').click(function(event) {
-        socket.emit('skipSongs', -1);
+        saveEmit('skipSongs', -1);
     });
     $('#next').click(function(event) {
-        socket.emit('skipSongs', 1);
+        saveEmit('skipSongs', 1);
     });
     $('#playpause').click(function(event) {
         if (paused) {
-            socket.emit('startPlayback');
+            saveEmit('startPlayback');
         } else {
-            socket.emit('pausePlayback');
+            saveEmit('pausePlayback');
         }
     });
     $('#shuffle').click(function(event) {
-        socket.emit('shuffleQueue');
+        saveEmit('shuffleQueue');
     });
     $('#stream').click(function(event) {
         var streamingButton = $('#stream');
@@ -420,4 +515,36 @@ $(document).ready(function() {
     $(function () {
       $('[data-toggle="tooltip"]').tooltip();
     });
+    $('#loginModal').on('shown.bs.modal', function () {
+        $('#inputUsername').focus();
+    });
+    $('#loginModal').on('hidden.bs.modal', function () {
+        retryAfterLogin = _.noop;
+    });
+    $('#loginForm').submit(function(event) {
+        event.preventDefault();
+
+        $.ajax({
+            type: 'POST',
+            url: '/login',
+            data: JSON.stringify({
+                username: $('#inputUsername').val(),
+                password: $('#inputPassword').val()
+            }),
+            contentType: 'application/json'
+        })
+        .done(function(data) {
+            console.log(data);
+            updateLogin(function() {
+                $('#loginModal').modal('hide');
+
+                retryAfterLogin();
+                retryAfterLogin = _.noop;
+            }, true);
+        })
+        .error(function(res) {
+            $('#loginError').text(res.responseText);
+        });
+    });
+    updateLogin();
 });

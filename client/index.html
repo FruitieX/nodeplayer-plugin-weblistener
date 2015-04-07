@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
         <title>nodeplayer</title>
 
@@ -20,6 +20,46 @@
         <script src="listener.js"></script>
     </head>
     <body>
+        <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="Login" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title">Login required</h4>
+                    </div>
+
+                    <div class="modal-body">
+                        <!-- The form is placed inside the body of modal -->
+                        <form id="loginForm" class="form-horizontal">
+                            <div id="loginError"></div>
+                            <div class="form-group">
+                                <label class="col-xs-3 control-label">Username</label>
+                                <div class="col-xs-5">
+                                    <input id="inputUsername" type="text" class="form-control" name="username" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-xs-3 control-label">Password</label>
+                                <div class="col-xs-5">
+                                    <input id="inputPassword" type="password" class="form-control" name="password" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-xs-5 col-xs-offset-3">
+                                    <button type="submit" class="btn btn-primary">Login</button>
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="container">
             <div class="logo"><img src="media/logo.png" /> nodeplayer <sup><sup>alpha</sup></sup></div>
 
@@ -82,6 +122,7 @@
                     </div>
                     <ul class="list-group" id="queue">
                     </ul>
+                    <div id="auth-text"></div>
                 </div>
             </div>
         </div>
