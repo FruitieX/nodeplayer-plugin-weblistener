@@ -1,6 +1,6 @@
 {
   "name": "nodeplayer-plugin-weblistener",
-  "version": "0.1.995",
+  "version": "0.1.9999",
   "description": "web-based music listener plugin for nodeplayer",
   "main": "index.js",
   "scripts": {
