@@ -350,7 +350,8 @@ var updateQueue = function() {
         };
         var queueOnClick = function(index) {
             $('#queue' + index).dblclick(function(e) {
-                skipSongs(index);
+                // TODO: rapidly deleting songs triggers this for some reason
+                //skipSongs(index);
                 e.stopPropagation();
             });
         };
