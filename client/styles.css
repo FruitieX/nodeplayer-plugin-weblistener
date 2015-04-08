@@ -159,6 +159,10 @@ input, textarea {
     padding: 5px;
 }
 
+#now-playing-container {
+    margin-bottom: 10px;
+}
+
 .listener-link {
     text-align: center;
     color: #ccc;

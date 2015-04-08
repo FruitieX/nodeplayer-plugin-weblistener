@@ -130,8 +130,6 @@ socket.on('queue', function(data) {
     });
     queueTruncated = (data.length > data.items.length);
     if (!compareQueues(newQueue, queue)) {
-        console.log('updating queue');
-        console.log(newQueue, queue);
         queue = newQueue;
         updateQueue();
     }
@@ -289,17 +287,17 @@ var updateProgress = function(dt) { // dt = ms passed since last call
 };
 
 var setDummyNowPlaying = function() {
-    $('#now-playing').empty();
+    $('#now-playing-container').empty();
     $.tmpl('nowPlayingTemplate', {
         title: 'No more songs to play.',
         albumArt: {
             lq: 'media/NoAlbumArt.png'
         }
-    }).appendTo('#now-playing');
+    }).appendTo('#now-playing-container');
 };
 
 var updateQueue = function() {
-    $('#now-playing').empty();
+    $('#now-playing-container').empty();
     $('#queue').empty();
     $('#ellipsis').empty();
 
@@ -309,7 +307,7 @@ var updateQueue = function() {
         // now playing
         if (queue[0]) {
             queue[0].durationString = durationToString(queue[0].duration / 1000);
-            $.tmpl('nowPlayingTemplate', queue[0]).appendTo('#now-playing');
+            $.tmpl('nowPlayingTemplate', queue[0]).appendTo('#now-playing-container');
             updateProgress(0);
             $('#now-playing-item').click(function(e) {
                 var posX = e.pageX - $(this).offset().left;
