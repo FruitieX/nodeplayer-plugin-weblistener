@@ -317,11 +317,40 @@ var updateQueue = function() {
                 e.stopPropagation();
             });
         };
+        var queueOnClick = function(index) {
+            $('#queue' + index).dblclick(function(e) {
+                skipSongs(index);
+                e.stopPropagation();
+            });
+        };
+        var thumbnailOnClick = function(index) {
+            $('#thumbnail-overlay' + index).click(function(e) {
+                skipSongs(index);
+                e.stopPropagation();
+            });
+        };
+        var thumbnailOnMouseenter = function(index) {
+            $('#queue' + index).mouseenter(function(e) {
+                $('#thumbnail-overlay' + index).show();
+                e.stopPropagation();
+            });
+        };
+        var thumbnailOnMouseleave = function(index) {
+            $('#queue' + index).mouseleave(function(e) {
+                $('#thumbnail-overlay' + index).hide();
+                e.stopPropagation();
+            });
+        };
         for (var i = 1; i < queue.length; i++) {
             queue[i].durationString = durationToString(queue[i].duration / 1000);
             queue[i].pos = i;
             $.tmpl('queueTemplate', queue[i]).appendTo('#queue');
+            queueOnClick(i);
             removeOnClick(i);
+            $('#thumbnail-overlay' + i).hide();
+            thumbnailOnClick(i);
+            thumbnailOnMouseenter(i);
+            thumbnailOnMouseleave(i);
         }
         if (queueTruncated) {
             $.tmpl('queueTruncated').appendTo('#queue');
@@ -422,15 +451,18 @@ $(document).ready(function() {
     });
 
     var queueMarkup =
-        '<li class="list-group-item queue-item" id="${backendName}${songID}"' +
-            'onclick="skipSongs(\'${pos}\');">' +
+        '<li class="list-group-item queue-item" id="queue${pos}">' +
+            //'onclick="skipSongs(\'${pos}\');">' +
 
         '<div class="right fullHeight">' +
         '<div class="remove glyphicon glyphicon-remove" id="remove${pos}"></div>' +
         '<div class="duration-container"><div class="duration">${durationString}</div></div>' +
         '</div>' +
 
-        '<div class="thumbnail"><img src=${albumArt.lq} /></div>' +
+        '<div class="thumbnail" id="thumbnail${pos}"><img src=${albumArt.lq} /></div>' +
+
+        '<div class="thumbnail-overlay" id="thumbnail-overlay${pos}">' +
+        '<img src="media/thumbnail-overlay.png" /></div>' +
 
         '<div class="songinfo">' +
         '<div class="big"><b>${title}</b></div>' +
