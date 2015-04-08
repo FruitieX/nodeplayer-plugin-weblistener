@@ -390,8 +390,9 @@ var updateQueue = function() {
                 $(ui.item).data('startindex', ui.item.index());
             },
             update: function(event, ui) {
-                var from = ui.item.data('startindex');
-                var to = ui.item.index();
+                // + 1 because now playing is in separate list
+                var from = ui.item.data('startindex') + 1;
+                var to = ui.item.index() + 1;
 
                 var song = queue.splice(from, 1);
                 queue.splice(to, 0, song[0]);
