@@ -150,7 +150,7 @@ var saveEmit = function(event, data) {
     socket.emit(event, data);
 };
 
-var startPlayback = function() {
+var startPlayback = function(forceSkip) {
     if (!currentSong.backendName ||
         !currentSong.songID ||
         !currentSong.format) {
@@ -166,7 +166,9 @@ var startPlayback = function() {
 
     audio.off('loadedmetadata');
     audio.on('loadedmetadata', function() {
-        if (currentSong.position) {
+        // don't seek if position is zero to avoid skips at start of song,
+        // however, do skip if we eg. just started streaming
+        if (currentSong.position || forceSkip) {
             var pos = currentSong.position / 1000 +
                 (new Date().getTime() - currentSong.playbackStart) / 1000;
             console.info('seeking to ' + pos);
@@ -238,7 +240,7 @@ socket.on('playback', function(data) {
         }
 
         if (streaming) {
-            startPlayback();
+            startPlayback(false);
         }
     }
 });
@@ -509,7 +511,7 @@ $(document).ready(function() {
 
             streamingButton.addClass('btn-primary');
 
-            startPlayback();
+            startPlayback(true);
         }
     });
     $(function () {
