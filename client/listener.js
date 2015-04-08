@@ -288,12 +288,24 @@ var updateProgress = function(dt) { // dt = ms passed since last call
     }
 };
 
+var setDummyNowPlaying = function() {
+    $('#now-playing').empty();
+    $.tmpl('nowPlayingTemplate', {
+        title: 'No more songs to play.',
+        albumArt: {
+            lq: 'media/NoAlbumArt.png'
+        }
+    }).appendTo('#now-playing');
+};
+
 var updateQueue = function() {
     $('#now-playing').empty();
     $('#queue').empty();
     $('#ellipsis').empty();
 
-    if (queue) {
+    if (!queue || !queue[0]) {
+        setDummyNowPlaying();
+    } else {
         // now playing
         if (queue[0]) {
             queue[0].durationString = durationToString(queue[0].duration / 1000);
@@ -456,8 +468,8 @@ $(document).ready(function() {
     var nowPlayingMarkup =
         '<li class="list-group-item now-playing" id="now-playing-item">' +
 
-        '<div class="right fullHeight">' +
-        '<div class="remove glyphicon glyphicon-remove" id="remove0"></div>' +
+        '<div class="right">' +
+        '{{if songID}}<div class="remove glyphicon glyphicon-remove" id="remove0"></div>{{/if}}' +
         '<div class="duration-container"><div class="duration">${durationString}</div></div>' +
         '</div>' +
 
@@ -468,7 +480,7 @@ $(document).ready(function() {
         '<div id="progress"></div>' +
         '<div class="np-songinfo">' +
         '<div class="big"><b>${title}</b></div>' +
-        '<div class="small"><b>${artist}</b> (${album})</div>' +
+        '<div class="small"><b>${artist}</b> {{if album}}(${album}){{/if}}</div>' +
         '</div>' +
         '</li>';
 
@@ -509,7 +521,7 @@ $(document).ready(function() {
         '<img src="media/handle.png" />' +
         '</div>' +
 
-        '<div class="right fullHeight">' +
+        '<div class="right">' +
         '<div class="remove glyphicon glyphicon-remove" id="remove${pos}"></div>' +
         '<div class="duration-container"><div class="duration">${durationString}</div></div>' +
         '</div>' +
@@ -638,4 +650,5 @@ $(document).ready(function() {
         });
     });
     updateLogin();
+    setDummyNowPlaying();
 });
