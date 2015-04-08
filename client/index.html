@@ -12,6 +12,8 @@
         <link rel="stylesheet" href="styles.css">
         <link rel="icon" type="image/png" href="media/favicon.ico">
         <script src="js/jquery-1.11.1.min.js"></script>
+        <script src="js/jquery-ui.min.js"></script>
+        <script src="js/jquery.ui.touch-punch.min.js"></script>
         <script src="js/jquery.cookie.js"></script>
         <script src="js/jquery.tmpl.min.js"></script>
         <script src="js/bootstrap.min.js"></script>
@@ -65,6 +67,8 @@
 
             <div class="row">
                 <div class="col-lg-8">
+                    <ul class="list-group" id="now-playing">
+                    </ul>
                     <div id="controls" class="btn-group" role="group" aria-label="...">
                         <button id="previous" type="button" class="btn btn-default" aria-label="Previous">
                             <span class="glyphicon glyphicon-step-backward" aria-hidden="true"></span>
@@ -121,6 +125,8 @@
                         </div>
                     </div>
                     <ul class="list-group" id="queue">
+                    </ul>
+                    <ul class="list-group" id="ellipsis">
                     </ul>
                     <div id="auth-text"></div>
                 </div>

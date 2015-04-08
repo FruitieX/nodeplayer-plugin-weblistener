@@ -1,12 +1,17 @@
-.thumbnail {
+.thumbnail-container {
+    float: left;
     position: relative;
+    height: 60px;
+    width: 60px;
+    margin-right: 10px;
+}
+.thumbnail {
+    position: absolute;
     height: 60px;
     width: 60px;
     overflow: hidden;
     float: left;
     padding: 0px;
-    margin: 0px;
-    margin-right: 10px;
 }
 .thumbnail img {
     position: absolute;
@@ -24,9 +29,6 @@
     width: 60px;
     overflow: hidden;
     float: left;
-    padding: 0px;
-    margin: 0px;
-    margin-right: 10px;
 }
 .thumbnail-overlay img {
     z-index: 1;
@@ -193,8 +195,25 @@
     padding-top:10px;
     clear: both;
 }
+.handle {
+    height: 60px;
+    width: auto;
+    float: left;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.handle img {
+    height: 60px;
+    width: auto;
+    float: left;
+}
 .queue-item {
     padding: 5px;
+    padding-left: 0px;
+}
+.now-playing-item {
+    padding: 5px;
+    padding-left: 0px;
 }
 .queue-item:hover {
     background-color: #eee;

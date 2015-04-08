@@ -108,14 +108,33 @@ var searchRemove = function() {
     $('#search-remove').addClass('hidden');
 };
 
+var compareQueues = function(a, b) {
+    if (a.length !== b.length) {
+        return false;
+    }
+
+    for (var i = 0; i < a.length; i++) {
+        if (a[i].songID !== b[i].songID) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 var socket = io();
 socket.on('queue', function(data) {
-    queue = data.items;
-    _.each(queue, function(song) {
+    var newQueue = data.items;
+    _.each(newQueue, function(song) {
         verifySong(song);
     });
     queueTruncated = (data.length > data.items.length);
-    updateQueue();
+    if (!compareQueues(newQueue, queue)) {
+        console.log('updating queue');
+        console.log(newQueue, queue);
+        queue = newQueue;
+        updateQueue();
+    }
 });
 
 socket.on('volume', function(data) {
@@ -270,23 +289,25 @@ var updateProgress = function(dt) { // dt = ms passed since last call
 };
 
 var updateQueue = function() {
+    $('#now-playing').empty();
     $('#queue').empty();
+    $('#ellipsis').empty();
 
     if (queue) {
         // now playing
         if (queue[0]) {
             queue[0].durationString = durationToString(queue[0].duration / 1000);
-            $.tmpl('nowPlayingTemplate', queue[0]).appendTo('#queue');
+            $.tmpl('nowPlayingTemplate', queue[0]).appendTo('#now-playing');
             updateProgress(0);
-            $('#nowplaying').click(function(e) {
+            $('#now-playing-item').click(function(e) {
                 var posX = e.pageX - $(this).offset().left;
                 saveEmit('startPlayback', (posX / $(this).outerWidth()) * queue[0].duration);
             });
-            $('#nowplaying').mousemove(function(e) {
+            $('#now-playing-item').mousemove(function(e) {
                 var posX = e.pageX - $(this).offset().left;
                 $('#progressmouseover').css('width', 100 * (posX / $(this).outerWidth()) + '%');
             });
-            $('#nowplaying').hover(function(e) {
+            $('#now-playing-item').hover(function(e) {
                 $('#progressmouseover').css('visibility', 'visible');
             }, function(e) {
                 $('#progressmouseover').css('visibility', 'hidden');
@@ -341,6 +362,7 @@ var updateQueue = function() {
                 e.stopPropagation();
             });
         };
+
         for (var i = 1; i < queue.length; i++) {
             queue[i].durationString = durationToString(queue[i].duration / 1000);
             queue[i].pos = i;
@@ -353,8 +375,33 @@ var updateQueue = function() {
             thumbnailOnMouseleave(i);
         }
         if (queueTruncated) {
-            $.tmpl('queueTruncated').appendTo('#queue');
+            $.tmpl('queueTruncated').appendTo('#ellipsis');
         }
+        var queueList = $('#queue');
+        queueList.sortable({
+            distance: 10,
+            handle: '.handle',
+            cursor: 'move',
+            containment: 'parent',
+            tolerance: 'pointer',
+            opacity: 0.75,
+            scrollSpeed: 5,
+            start: function(event, ui) {
+                $(ui.item).data('startindex', ui.item.index());
+            },
+            update: function(event, ui) {
+                var from = ui.item.data('startindex');
+                var to = ui.item.index();
+
+                var song = queue.splice(from, 1);
+                queue.splice(to, 0, song[0]);
+
+                saveEmit('moveInQueue', {
+                    from: from,
+                    to: to
+                });
+            }
+        });
     }
 };
 
@@ -406,14 +453,16 @@ $(document).ready(function() {
     }
 
     var nowPlayingMarkup =
-        '<li class="list-group-item now-playing" id="nowplaying">' +
+        '<li class="list-group-item now-playing" id="now-playing-item">' +
 
         '<div class="right fullHeight">' +
         '<div class="remove glyphicon glyphicon-remove" id="remove0"></div>' +
         '<div class="duration-container"><div class="duration">${durationString}</div></div>' +
         '</div>' +
 
+        '<div class="thumbnail-container">' +
         '<div class="thumbnail"><img src=${albumArt.lq} /></div>' +
+        '</div>' +
         '<div id="progressmouseover"></div>' +
         '<div id="progress"></div>' +
         '<div class="np-songinfo">' +
@@ -430,7 +479,9 @@ $(document).ready(function() {
 
         '<div class="duration-container"><div class="duration">${duration}</div></div>' +
 
+        '<div class="thumbnail-container">' +
         '<div class="thumbnail"><img src=${albumArt.lq} /></div>' +
+        '</div>' +
         '<div class="big"><b>${title}</b></div>' +
         '<div class="small"><b>${artist}</b> (${album})</div>' +
         '</li>';
@@ -452,17 +503,22 @@ $(document).ready(function() {
 
     var queueMarkup =
         '<li class="list-group-item queue-item" id="queue${pos}">' +
-            //'onclick="skipSongs(\'${pos}\');">' +
+
+        '<div class="handle">' +
+        '<img src="media/handle.png" />' +
+        '</div>' +
 
         '<div class="right fullHeight">' +
         '<div class="remove glyphicon glyphicon-remove" id="remove${pos}"></div>' +
         '<div class="duration-container"><div class="duration">${durationString}</div></div>' +
         '</div>' +
 
+        '<div class="thumbnail-container">' +
         '<div class="thumbnail" id="thumbnail${pos}"><img src=${albumArt.lq} /></div>' +
 
         '<div class="thumbnail-overlay" id="thumbnail-overlay${pos}">' +
         '<img src="media/thumbnail-overlay.png" /></div>' +
+        '</div>' +
 
         '<div class="songinfo">' +
         '<div class="big"><b>${title}</b></div>' +
