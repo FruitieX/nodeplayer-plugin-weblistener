@@ -15,7 +15,7 @@ var verifySong = function(song) {
         song.albumArt = {};
     }
     if (!song.albumArt.lq) {
-        song.albumArt.lq = 'media/NoAlbumArt.png';
+        song.albumArt.lq = '/weblistener/media/NoAlbumArt.png';
     }
 };
 
@@ -291,7 +291,7 @@ var setDummyNowPlaying = function() {
     $.tmpl('nowPlayingTemplate', {
         title: 'No more songs to play.',
         albumArt: {
-            lq: 'media/NoAlbumArt.png'
+            lq: '/weblistener/media/NoAlbumArt.png'
         }
     }).appendTo('#now-playing-container');
 };
@@ -517,7 +517,7 @@ $(document).ready(function() {
         '<li class="list-group-item queue-item" id="queue${pos}">' +
 
         '<div class="handle">' +
-        '<img src="media/handle.png" />' +
+        '<img src="/weblistener/media/handle.png" />' +
         '</div>' +
 
         '<div class="right">' +
@@ -529,7 +529,7 @@ $(document).ready(function() {
         '<div class="thumbnail" id="thumbnail${pos}"><img src=${albumArt.lq} /></div>' +
 
         '<div class="thumbnail-overlay" id="thumbnail-overlay${pos}">' +
-        '<img src="media/thumbnail-overlay.png" /></div>' +
+        '<img src="/weblistener/media/thumbnail-overlay.png" /></div>' +
         '</div>' +
 
         '<div class="songinfo">' +
